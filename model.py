@@ -6,7 +6,12 @@ from rdkit.Chem import Descriptors
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import (
+    KFold,
+    RandomizedSearchCV,
+    cross_validate,
+    train_test_split,
+)
 
 # ---------------------------------------
 # 1. Load dataset
@@ -151,6 +156,184 @@ evaluate(y_test, lr_pred, "Linear Regression")
 
 evaluate(y_test, rf_pred, "Random Forest")
 evaluate(y_test, gb_pred, "Gradient Boosting")
+
+# ============================================================
+# 5-Fold Cross-Validation
+# ============================================================
+
+print("\n" + "=" * 50)
+print("5-FOLD CROSS-VALIDATION")
+print("=" * 50)
+
+kf = KFold(
+    n_splits=5,
+    shuffle=True,
+    random_state=42
+)
+
+# Random Forest
+rf_cv = cross_validate(
+    rf_model,
+    X,
+    y,
+    cv=kf,
+    scoring={
+        "r2": "r2",
+        "rmse": "neg_root_mean_squared_error"
+    },
+    n_jobs=-1
+)
+
+rf_r2 = rf_cv["test_r2"]
+rf_rmse = -rf_cv["test_rmse"]
+
+print("\nRandom Forest Cross-Validation:")
+print("R² scores:", rf_r2)
+print("Mean R²:", rf_r2.mean())
+print("Std R²:", rf_r2.std())
+
+print("\nRMSE scores:", rf_rmse)
+print("Mean RMSE:", rf_rmse.mean())
+print("Std RMSE:", rf_rmse.std())
+
+
+# Gradient Boosting
+gb_cv = cross_validate(
+    gb_model,
+    X,
+    y,
+    cv=kf,
+    scoring={
+        "r2": "r2",
+        "rmse": "neg_root_mean_squared_error"
+    },
+    n_jobs=-1
+)
+
+gb_r2 = gb_cv["test_r2"]
+gb_rmse = -gb_cv["test_rmse"]
+
+print("\nGradient Boosting Cross-Validation:")
+print("R² scores:", gb_r2)
+print("Mean R²:", gb_r2.mean())
+print("Std R²:", gb_r2.std())
+
+print("\nRMSE scores:", gb_rmse)
+print("Mean RMSE:", gb_rmse.mean())
+print("Std RMSE:", gb_rmse.std())
+
+# ============================================================
+# Random Forest Hyperparameter Tuning
+# ============================================================
+
+print("\n" + "=" * 50)
+print("RANDOM FOREST HYPERPARAMETER TUNING")
+print("=" * 50)
+
+# Parameter search space
+param_grid = {
+    "n_estimators": [200, 300, 400, 500, 600],
+    "max_depth": [None, 10, 15, 20, 25, 30],
+    "min_samples_split": [2, 3, 5, 8, 10],
+    "min_samples_leaf": [1, 2, 4, 6],
+    "max_features": ["sqrt", "log2", 0.5, 0.75]
+}
+
+# Cross-validation strategy
+kf_tuning = KFold(
+    n_splits=5,
+    shuffle=True,
+    random_state=42
+)
+
+# Base Random Forest
+rf_base = RandomForestRegressor(
+    random_state=42,
+    n_jobs=-1
+)
+
+# Randomized search
+rf_search = RandomizedSearchCV(
+    estimator=rf_base,
+    param_distributions=param_grid,
+    n_iter=30,
+    scoring="neg_root_mean_squared_error",
+    cv=kf_tuning,
+    random_state=42,
+    n_jobs=-1,
+    verbose=1
+)
+
+# IMPORTANT:
+# Tune only on the training data
+rf_search.fit(X_train, y_train)
+
+# Best parameters
+print("\nBest Parameters:")
+print(rf_search.best_params_)
+
+# Best cross-validation RMSE
+print("\nBest CV RMSE:")
+print(-rf_search.best_score_)
+
+# Best model
+best_rf = rf_search.best_estimator_
+
+# Evaluate on untouched test set
+best_rf_pred = best_rf.predict(X_test)
+
+print("\nTuned Random Forest Test Results:")
+evaluate(y_test, best_rf_pred, "Tuned Random Forest")
+
+# ============================================================
+# Gradient Boosting Hyperparameter Tuning
+# ============================================================
+
+print("\n" + "=" * 50)
+print("GRADIENT BOOSTING HYPERPARAMETER TUNING")
+print("=" * 50)
+
+gb_param_grid = {
+    "n_estimators": [100, 150, 200, 300, 400, 500],
+    "learning_rate": [0.01, 0.03, 0.05, 0.08, 0.1],
+    "max_depth": [2, 3, 4, 5],
+    "min_samples_split": [2, 3, 5, 8],
+    "min_samples_leaf": [1, 2, 4, 6],
+    "subsample": [0.7, 0.8, 0.9, 1.0]
+}
+
+gb_base = GradientBoostingRegressor(
+    random_state=42
+)
+
+gb_search = RandomizedSearchCV(
+    estimator=gb_base,
+    param_distributions=gb_param_grid,
+    n_iter=30,
+    scoring="neg_root_mean_squared_error",
+    cv=kf_tuning,
+    random_state=42,
+    n_jobs=-1,
+    verbose=1
+)
+
+# Tune only on training data
+gb_search.fit(X_train, y_train)
+
+print("\nBest Gradient Boosting Parameters:")
+print(gb_search.best_params_)
+
+print("\nBest Gradient Boosting CV RMSE:")
+print(-gb_search.best_score_)
+
+# Best model
+best_gb = gb_search.best_estimator_
+
+# Evaluate on untouched test set
+best_gb_pred = best_gb.predict(X_test)
+
+print("\nTuned Gradient Boosting Test Results:")
+evaluate(y_test, best_gb_pred, "Tuned Gradient Boosting")
 
 # ---------------------------------------
 # 9. Plot actual vs predicted
