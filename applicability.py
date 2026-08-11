@@ -220,7 +220,12 @@ print("\n" + "=" * 60)
 print("APPLICABILITY DOMAIN ASSESSMENT")
 print("=" * 60)
 
+AD_THRESHOLD = 0.55
 
+if max_similarity >= AD_THRESHOLD:
+    status = "HIGH CONFIDENCE / INSIDE DOMAIN"
+else:
+    status = "LOW CONFIDENCE / OUTSIDE DOMAIN"
 if max_similarity >= 0.80:
 
     status = "HIGH CONFIDENCE"
