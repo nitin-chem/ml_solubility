@@ -1,11 +1,9 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
 from rdkit import Chem
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 from rdkit.DataStructs import BulkTanimotoSimilarity
-
 
 # ============================================================
 # APPLICABILITY DOMAIN THRESHOLD ANALYSIS

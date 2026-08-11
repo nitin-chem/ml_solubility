@@ -1,10 +1,10 @@
+import sys
+
 import joblib
 import numpy as np
-
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
-
 
 # ============================================================
 # 1. Load trained model
@@ -116,7 +116,7 @@ else:
 print("\nWould you like to predict another SMILES? (y/n)")
 if input().strip().lower() != 'y':
     print("\nExiting program.")
-    exit()
+    sys.exit()  
     
 smiles2 = input("\nEnter another SMILES: ").strip()
 features2 = featurize(smiles2)

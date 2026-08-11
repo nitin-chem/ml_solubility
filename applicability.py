@@ -1,11 +1,9 @@
 import joblib
 import numpy as np
 import pandas as pd
-
 from rdkit import Chem
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 from rdkit.DataStructs import TanimotoSimilarity
-
 
 # ============================================================
 # 1. LOAD MODEL
@@ -111,7 +109,7 @@ query_mol = Chem.MolFromSmiles(query_smiles)
 if query_mol is None:
 
     print("\nERROR: Invalid SMILES.")
-    exit()
+    exit()  # noqa: PLR1722
 
 
 # ============================================================
