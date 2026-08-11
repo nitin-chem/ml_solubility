@@ -1,3 +1,4 @@
+import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -348,13 +349,23 @@ plt.title("Random Forest Predictions")
 plt.grid()
 plt.show()
 
-import joblib
+# Best model
+best_gb = gb_search.best_estimator_
 
-joblib.dump(rf_model, "model.pkl")
+# Save the tuned model
+joblib.dump(best_gb, "model.pkl")
+
+print("\nFinal model saved as model.pkl")
+
+# Evaluate on untouched test set
+best_gb_pred = best_gb.predict(X_test)
+
+print("\nTuned Gradient Boosting Test Results:")
+evaluate(y_test, best_gb_pred, "Tuned Gradient Boosting")
 
 results = pd.DataFrame({
     "Actual": y_test,
-    "Predicted": rf_pred
+    "Predicted": best_gb_pred
 })
 
 results.to_csv("predictions.csv", index=False)
