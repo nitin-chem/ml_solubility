@@ -18,7 +18,7 @@ from sklearn.model_selection import (
 # 1. Load dataset
 # ---------------------------------------
 
-df = pd.read_csv("delaney.csv")
+df = pd.read_excel("delaney.xlsx")
 
 # Remove unnecessary spaces from column names
 df.columns = df.columns.str.strip()
@@ -34,7 +34,7 @@ print(df.columns)
 
 smiles_col = "SMILES"
 
-target_col = next(col for col in df.columns if "measured log" in col)
+target_col = "measured log"
 
 print("SMILES column:", smiles_col)
 print("Target column:", target_col)
