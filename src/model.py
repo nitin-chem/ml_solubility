@@ -20,7 +20,21 @@ from sklearn.model_selection import (
     cross_validate,
     train_test_split,
 )
+from pathlib import Path
 
+# Project root directory
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Project folders
+DATA_DIR = PROJECT_ROOT / "data"
+MODEL_DIR = PROJECT_ROOT / "models"
+FIGURES_DIR = PROJECT_ROOT / "results" / "figures"
+TABLES_DIR = PROJECT_ROOT / "results" / "tables"
+
+# Create result folders if they don't exist
+FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+TABLES_DIR.mkdir(parents=True, exist_ok=True)
+MODEL_DIR.mkdir(parents=True, exist_ok=True)
 # ============================================================
 # 1. LOAD DATASET
 # ============================================================

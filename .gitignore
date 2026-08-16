@@ -1,3 +1,4 @@
+@"
 # Virtual environments
 .venv/
 venv/
@@ -12,6 +13,7 @@ __pycache__/
 
 # IDE
 .vscode/
+.idea/
 
 # OS
 .DS_Store
@@ -20,3 +22,15 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.log
+
+# Python distribution/build
+build/
+dist/
+*.egg-info/
+
+# Environment / secrets
+.env
+
+# Local ML artifacts
+*.joblib
+"@ | Set-Content .gitignore
