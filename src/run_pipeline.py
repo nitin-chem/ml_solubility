@@ -17,7 +17,7 @@ steps = [
 
 for step in steps:
     print(f"\nRunning {step}...")
-    result = subprocess.run([sys.executable, step])
+    result = subprocess.run([sys.executable, step], check=False)
 
     if result.returncode != 0:
         print(f"FAILED: {step}")

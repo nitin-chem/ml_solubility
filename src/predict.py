@@ -6,7 +6,6 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 
-
 # ============================================================
 # 1. Project paths and trained model
 # ============================================================

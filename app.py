@@ -1,16 +1,12 @@
 import streamlit as st
-
 from rdkit import Chem
 from rdkit.Chem import Draw
-
-from streamlit_ketcher import st_ketcher
-
 from src.applicability import check_applicability
 from src.predict import (
     molecular_properties,
     predict_solubility,
 )
-
+from streamlit_ketcher import st_ketcher
 
 # ============================================================
 # Page configuration
@@ -187,10 +183,8 @@ if input_method == "✏️ Draw Molecule":
         current_smiles = drawn_smiles.strip()
 
 
-elif input_method == "</> Enter SMILES":
-
-    if direct_smiles.strip():
-        current_smiles = direct_smiles.strip()
+elif input_method == "</> Enter SMILES" and direct_smiles.strip():
+    current_smiles = direct_smiles.strip()
 
 
 # ============================================================
@@ -315,7 +309,7 @@ if st.button(
             st.error(str(error))
 
 
-        except Exception as error:
+        except (TypeError, KeyError, RuntimeError) as error:
 
             st.error(
                 f"Prediction failed: {error}"
