@@ -1,8 +1,3 @@
-import sys
-
-# ============================================================
-# 1. Load trained model
-# ============================================================
 from pathlib import Path
 
 import joblib
@@ -11,25 +6,25 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 
-# Project root directory
+
+# ============================================================
+# 1. Project paths and trained model
+# ============================================================
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load trained model
 MODELS_DIR = BASE_DIR / "models"
 model_path = MODELS_DIR / "model.pkl"
-model = joblib.load(model_path)
 
-print("=" * 50)
-print("MOLECULAR SOLUBILITY PREDICTION")
-print("=" * 50)
+model = joblib.load(model_path)
 
 
 # ============================================================
-# 2. Create Morgan fingerprint generator
+# 2. Morgan fingerprint generator
 # ============================================================
 
 # IMPORTANT:
-# These settings MUST be the same as model.py
+# These settings MUST remain the same as model.py
 
 morgan = GetMorganGenerator(
     radius=2,
@@ -48,8 +43,7 @@ def featurize(smiles):
     if mol is None:
         return None
 
-    # ---- Molecular descriptors ----
-
+    # Five molecular descriptors
     descriptors = [
         Descriptors.MolWt(mol),
         Descriptors.MolLogP(mol),
@@ -58,81 +52,93 @@ def featurize(smiles):
         Descriptors.TPSA(mol)
     ]
 
-    # ---- Morgan fingerprint ----
-
+    # 512-bit Morgan fingerprint
     fingerprint = list(
         morgan.GetFingerprint(mol)
     )
 
-    # 5 descriptors + 512 fingerprint bits
+    # 5 descriptors + 512 fingerprint bits = 517 features
     features = descriptors + fingerprint
 
     return np.array(features).reshape(1, -1)
+#============================================================
+# Add a function to compute molecular properties
+#============================================================
+def molecular_properties(smiles):
 
+    mol = Chem.MolFromSmiles(smiles)
 
+    if mol is None:
+        raise ValueError("Invalid SMILES")
+
+    return {
+        "Molecular Weight": Descriptors.MolWt(mol),
+        "LogP": Descriptors.MolLogP(mol),
+        "H-Bond Donors": Descriptors.NumHDonors(mol),
+        "H-Bond Acceptors": Descriptors.NumHAcceptors(mol),
+        "TPSA": Descriptors.TPSA(mol),
+    }
 # ============================================================
-# 4. Get SMILES from user
+# 4. Prediction function
 # ============================================================
 
-smiles = input("\nEnter SMILES: ").strip()
+def predict_solubility(smiles):
 
+    smiles = smiles.strip()
 
-# ============================================================
-# 5. Generate features
-# ============================================================
+    if not smiles:
+        raise ValueError("SMILES cannot be empty.")
 
-features = featurize(smiles)
+    features = featurize(smiles)
 
-
-if features is None:
-
-    print("\nERROR: Invalid SMILES.")
-    print("Please enter a valid chemical SMILES.")
-
-else:
-
-    print("\nFeatures generated:", features.shape)
-
-
-    # ========================================================
-    # 6. Make prediction
-    # ========================================================
+    if features is None:
+        raise ValueError("Invalid SMILES. Please enter a valid chemical SMILES.")
 
     prediction = model.predict(features)[0]
 
+    return float(prediction)
 
-    # ========================================================
-    # 7. Display result
-    # ========================================================
 
-    print("\n" + "=" * 50)
-    print("PREDICTION")
-    print("=" * 50)
+# ============================================================
+# 5. Terminal interface
+# ============================================================
 
-    print(f"SMILES: {smiles}")
-
-    print(
-        f"Predicted logS: {prediction:.4f}"
-    )
+if __name__ == "__main__":
 
     print("=" * 50)
-    
-#=========================================================
-# Add another Smiles input
-#=========================================================
-print("\nWould you like to predict another SMILES? (y/n)")
-if input().strip().lower() != 'y':
-    print("\nExiting program.")
-    sys.exit()  
-    
-smiles2 = input("\nEnter another SMILES: ").strip()
-features2 = featurize(smiles2)
+    print("MOLECULAR SOLUBILITY PREDICTION")
+    print("=" * 50)
 
-if features2 is None:
-    print("\nERROR: Invalid SMILES.")
-    print("Please enter a valid chemical SMILES.")
-else:
-    prediction2 = model.predict(features2)[0]
-    print(f"SMILES: {smiles2}")
-    print(f"Predicted logS: {prediction2:.4f}")
+    while True:
 
+        smiles = input("\nEnter SMILES: ").strip()
+
+        try:
+
+            prediction = predict_solubility(smiles)
+
+            features = featurize(smiles)
+
+            print("\nFeatures generated:", features.shape)
+
+            print("\n" + "=" * 50)
+            print("PREDICTION")
+            print("=" * 50)
+
+            print(f"SMILES: {smiles}")
+            print(f"Predicted logS: {prediction:.4f}")
+
+            print("=" * 50)
+
+        except ValueError as error:
+
+            print(f"\nERROR: {error}")
+
+        again = input(
+            "\nWould you like to predict another SMILES? (y/n): "
+        ).strip().lower()
+
+        if again != "y":
+
+            print("\nExiting program.")
+            break
