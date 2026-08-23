@@ -22,24 +22,27 @@ from sklearn.model_selection import (
 )
 from pathlib import Path
 
-# Project root directory
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# ============================================================
+# PROJECT PATHS
+# ============================================================
 
-# Project folders
-DATA_DIR = PROJECT_ROOT / "data"
-MODEL_DIR = PROJECT_ROOT / "models"
-FIGURES_DIR = PROJECT_ROOT / "results" / "figures"
-TABLES_DIR = PROJECT_ROOT / "results" / "tables"
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Create result folders if they don't exist
+DATA_DIR = BASE_DIR / "data"
+MODEL_DIR = BASE_DIR / "models"
+RESULTS_DIR = BASE_DIR / "results"
+FIGURES_DIR = RESULTS_DIR / "figures"
+TABLES_DIR = RESULTS_DIR / "tables"
+
+# Create output directories if they do not exist
+MODEL_DIR.mkdir(parents=True, exist_ok=True)
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 TABLES_DIR.mkdir(parents=True, exist_ok=True)
-MODEL_DIR.mkdir(parents=True, exist_ok=True)
 # ============================================================
 # 1. LOAD DATASET
 # ============================================================
 
-df = pd.read_excel("delaney.xlsx")
+df = pd.read_excel(DATA_DIR / "delaney.xlsx")
 
 # Remove unnecessary spaces from column names
 df.columns = df.columns.str.strip()
@@ -450,10 +453,8 @@ final_rmse, final_r2 = evaluate(
 
 joblib.dump(
     best_gb,
-    "model.pkl"
+    MODEL_DIR / "model.pkl"
 )
-
-print("\nFinal model saved as model.pkl")
 
 # ============================================================
 # 13. SAVE PREDICTIONS
@@ -465,11 +466,11 @@ results = pd.DataFrame({
 })
 
 results.to_csv(
-    "predictions.csv",
+    TABLES_DIR / "predictions.csv",
     index=False
 )
 
-print("Predictions saved as predictions.csv")
+print(f"Predictions saved as: {TABLES_DIR / 'predictions.csv'}")
 
 
 # ============================================================
@@ -513,7 +514,7 @@ plt.grid()
 plt.tight_layout()
 
 plt.savefig(
-    "actual_vs_predicted.png",
+    FIGURES_DIR / "actual_vs_predicted.png",
     dpi=300
 )
 
@@ -532,7 +533,6 @@ print("Model: Tuned Gradient Boosting")
 print("Test RMSE:", final_rmse)
 print("Test R²:", final_r2)
 print("CV RMSE:", -gb_search.best_score_)
-print("Model saved: model.pkl")
-print("Predictions saved: predictions.csv")
-print("Plot saved: actual_vs_predicted.png")
-
+print(f"Model saved: {MODEL_DIR / 'model.pkl'}")
+print(f"Predictions saved: {TABLES_DIR / 'predictions.csv'}")
+print(f"Plot saved: {FIGURES_DIR / 'actual_vs_predicted.png'}")

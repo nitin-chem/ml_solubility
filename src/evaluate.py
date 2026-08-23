@@ -1,18 +1,26 @@
+from pathlib import Path
+
 import joblib
 import numpy as np
 import pandas as pd
-
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
-
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    mean_squared_error,
-    mean_absolute_error,
-    r2_score
-)
 
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+DATA_DIR = BASE_DIR / "data"
+MODEL_DIR = BASE_DIR / "models"
+RESULTS_DIR = BASE_DIR / "results"
+TABLES_DIR = RESULTS_DIR / "tables"
+
+TABLES_DIR.mkdir(parents=True, exist_ok=True)
 
 # ============================================================
 # 1. LOAD MODEL
@@ -22,8 +30,7 @@ print("=" * 60)
 print("FINAL MODEL EVALUATION")
 print("=" * 60)
 
-model = joblib.load("model.pkl")
-
+model = joblib.load(MODEL_DIR / "model.pkl")
 print("\nModel loaded successfully.")
 print("Model:", type(model).__name__)
 
@@ -32,7 +39,7 @@ print("Model:", type(model).__name__)
 # 2. LOAD DATASET
 # ============================================================
 
-df = pd.read_excel("delaney.xlsx")
+df = pd.read_excel(DATA_DIR / "delaney.xlsx")
 
 df.columns = df.columns.str.strip()
 
@@ -169,12 +176,12 @@ results = pd.DataFrame({
 })
 
 results.to_csv(
-    "final_model_performance.csv",
+    TABLES_DIR / "final_model_performance.csv",
     index=False
 )
+print("Saved:")
+print(TABLES_DIR / "final_model_performance.csv")
 
-print("\nSaved:")
-print("final_model_performance.csv")
 
 
 # ============================================================
@@ -189,11 +196,11 @@ prediction_results = pd.DataFrame({
 })
 
 prediction_results.to_csv(
-    "final_model_predictions.csv",
+    TABLES_DIR / "final_model_predictions.csv",
     index=False
 )
 
-print("final_model_predictions.csv")
+print(TABLES_DIR / "final_model_predictions.csv")
 
 print("\n" + "=" * 60)
 print("EVALUATION COMPLETED")

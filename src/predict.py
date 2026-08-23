@@ -1,16 +1,22 @@
 import sys
 
+# ============================================================
+# 1. Load trained model
+# ============================================================
+from pathlib import Path
+
 import joblib
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 
-# ============================================================
-# 1. Load trained model
-# ============================================================
+# Project root directory
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-model = joblib.load("model.pkl")
+# Load trained model
+model_path = BASE_DIR / "models" / "model.pkl"
+model = joblib.load(model_path)
 
 print("=" * 50)
 print("MOLECULAR SOLUBILITY PREDICTION")
