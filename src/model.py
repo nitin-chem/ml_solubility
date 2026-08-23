@@ -1,8 +1,4 @@
-
-# ============================================================
-# MOLECULAR SOLUBILITY PREDICTION
-# RDKit + Machine Learning
-# ============================================================
+from pathlib import Path
 
 import joblib
 import matplotlib.pyplot as plt
@@ -20,7 +16,6 @@ from sklearn.model_selection import (
     cross_validate,
     train_test_split,
 )
-from pathlib import Path
 
 # ============================================================
 # PROJECT PATHS
@@ -29,13 +24,13 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 DATA_DIR = BASE_DIR / "data"
-MODEL_DIR = BASE_DIR / "models"
+MODELS_DIR = BASE_DIR / "models"
 RESULTS_DIR = BASE_DIR / "results"
 FIGURES_DIR = RESULTS_DIR / "figures"
 TABLES_DIR = RESULTS_DIR / "tables"
 
 # Create output directories if they do not exist
-MODEL_DIR.mkdir(parents=True, exist_ok=True)
+MODELS_DIR.mkdir(parents=True, exist_ok=True)
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 TABLES_DIR.mkdir(parents=True, exist_ok=True)
 # ============================================================
@@ -453,7 +448,7 @@ final_rmse, final_r2 = evaluate(
 
 joblib.dump(
     best_gb,
-    MODEL_DIR / "model.pkl"
+    MODELS_DIR / "model.pkl"
 )
 
 # ============================================================
@@ -533,6 +528,6 @@ print("Model: Tuned Gradient Boosting")
 print("Test RMSE:", final_rmse)
 print("Test R²:", final_r2)
 print("CV RMSE:", -gb_search.best_score_)
-print(f"Model saved: {MODEL_DIR / 'model.pkl'}")
+print(f"Model saved: {MODELS_DIR / 'model.pkl'}")
 print(f"Predictions saved: {TABLES_DIR / 'predictions.csv'}")
 print(f"Plot saved: {FIGURES_DIR / 'actual_vs_predicted.png'}")

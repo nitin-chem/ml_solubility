@@ -15,7 +15,8 @@ from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load trained model
-model_path = BASE_DIR / "models" / "model.pkl"
+MODELS_DIR = BASE_DIR / "models"
+model_path = MODELS_DIR / "model.pkl"
 model = joblib.load(model_path)
 
 print("=" * 50)

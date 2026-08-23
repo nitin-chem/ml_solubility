@@ -17,7 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 RESULTS_DIR = BASE_DIR / "results"
 TABLES_DIR = RESULTS_DIR / "tables"
 FIGURES_DIR = RESULTS_DIR / "figures"
-MODEL_DIR = BASE_DIR / "models"
+MODELS_DIR = BASE_DIR / "models"
 DATA_DIR = BASE_DIR / "data"
 # ============================================================
 # 1. Load trained model
@@ -29,7 +29,7 @@ print("=" * 60)
 
 
 
-model = joblib.load(MODEL_DIR / "model.pkl")
+model = joblib.load(MODELS_DIR / "model.pkl")
 
 print("\nModel loaded successfully.")
 print("Model:", type(model).__name__)
