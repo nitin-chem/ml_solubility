@@ -5,7 +5,7 @@ from rdkit import Chem
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 from rdkit.DataStructs import TanimotoSimilarity
 from pathlib import Path
-
+from sklearn.model_selection import train_test_split
 # ============================================================
 # 1. PROJECT PATHS
 # ============================================================
@@ -62,16 +62,29 @@ morgan = GetMorganGenerator(
 # 4. CREATE TRAINING FINGERPRINTS
 # ============================================================
 
-training_data = []
+valid_smiles = []
 
-for _, row in df.iterrows():
-
-    smiles = row[smiles_col]
+for smiles in df[smiles_col]:
 
     mol = Chem.MolFromSmiles(smiles)
 
-    if mol is None:
-        continue
+    if mol is not None:
+        valid_smiles.append(smiles)
+
+
+# Use the SAME split as AD threshold validation
+train_smiles, test_smiles = train_test_split(
+    valid_smiles,
+    test_size=0.20,
+    random_state=42
+)
+
+
+training_data = []
+
+for smiles in train_smiles:
+
+    mol = Chem.MolFromSmiles(smiles)
 
     fingerprint = morgan.GetFingerprint(mol)
 
@@ -81,8 +94,79 @@ for _, row in df.iterrows():
     })
 
 
-print("Valid training molecules:", len(training_data))
+print("Training reference molecules:", len(training_data))
+def check_applicability(smiles):
+    """
+    Calculate applicability-domain information
+    for a new molecule.
+    """
 
+    query_mol = Chem.MolFromSmiles(smiles)
+
+    if query_mol is None:
+        raise ValueError(
+            "Invalid SMILES. Please enter a valid chemical SMILES."
+        )
+
+    query_fp = morgan.GetFingerprint(query_mol)
+
+    similarities = []
+
+    for item in training_data:
+
+        training_smiles = item["smiles"]
+
+        # Do not compare a molecule with itself
+        if training_smiles == smiles:
+            continue
+
+        similarity = TanimotoSimilarity(
+            query_fp,
+            item["fingerprint"]
+        )
+
+        similarities.append(
+            (similarity, training_smiles)
+        )
+
+        similarities.sort(
+            key=lambda x: x[0],
+            reverse=True
+        )
+
+    top_5 = similarities[:5]
+
+    top_5_scores = [
+        score for score, _ in top_5
+    ]
+
+    max_similarity = similarities[0][0]
+
+    mean_top5 = np.mean(top_5_scores)
+
+    # Validated threshold
+    AD_THRESHOLD = 0.55
+
+    # Confidence classification
+    if max_similarity >= 0.80:
+
+        status = "HIGH CONFIDENCE"
+
+    elif max_similarity >= AD_THRESHOLD:
+
+        status = "MODERATE CONFIDENCE / INSIDE DOMAIN"
+
+    else:
+
+        status = "LOW CONFIDENCE / OUTSIDE DOMAIN"
+
+    return {
+        "max_similarity": float(max_similarity),
+        "mean_top5": float(mean_top5),
+        "status": status,
+        "most_similar_smiles": top_5[0][1],
+        "top_5": top_5,
+    }
 
 # ============================================================
 # 5. FEATURE GENERATION
@@ -116,167 +200,143 @@ def featurize(smiles):
 # ============================================================
 # 6. ENTER NEW MOLECULE
 # ============================================================
+if __name__ == "__main__":
+        query_smiles = input("\nEnter SMILES: ").strip()
 
-query_smiles = input("\nEnter SMILES: ").strip()
+        query_mol = Chem.MolFromSmiles(query_smiles)
 
-query_mol = Chem.MolFromSmiles(query_smiles)
+        if query_mol is None:
 
-if query_mol is None:
-
-    print("\nERROR: Invalid SMILES.")
-    exit()  # noqa: PLR1722
-
-
-# ============================================================
-# 7. PREDICT SOLUBILITY
-# ============================================================
-
-X_query = featurize(query_smiles)
-
-prediction = model.predict(X_query)[0]
-
-print("\nSMILES:")
-print(query_smiles)
-
-print("\nPredicted logS:")
-print(f"{prediction:.4f}")
+            print("\nERROR: Invalid SMILES.")
+            exit()  # noqa: PLR1722
 
 
-# ============================================================
-# 8. CALCULATE Tanimoto SIMILARITY
-# ============================================================
+        # ============================================================
+        # 7. PREDICT SOLUBILITY
+        # ============================================================
 
-query_fp = morgan.GetFingerprint(query_mol)
+        X_query = featurize(query_smiles)
 
-similarities = []
+        prediction = model.predict(X_query)[0]
 
-for item in training_data:
+        print("\nSMILES:")
+        print(query_smiles)
 
-    training_smiles = item["smiles"]
-
-    # --------------------------------------------------------
-    # IMPORTANT:
-    # Don't compare molecule with itself
-    # --------------------------------------------------------
-
-    if training_smiles == query_smiles:
-
-        continue
-
-    similarity = TanimotoSimilarity(
-        query_fp,
-        item["fingerprint"]
-    )
-
-    similarities.append(
-        (similarity, training_smiles)
-    )
+        print("\nPredicted logS:")
+        print(f"{prediction:.4f}")
 
 
-# Sort from highest to lowest similarity
+        # ============================================================
+        # 8. CALCULATE Tanimoto SIMILARITY
+        # ============================================================
 
-similarities.sort(
-    key=lambda x: x[0],
-    reverse=True
-)
+        query_fp = morgan.GetFingerprint(query_mol)
 
+        similarities = []
 
-# ============================================================
-# 9. SIMILARITY STATISTICS
-# ============================================================
+        for item in training_data:
 
-top_5 = similarities[:5]
+            training_smiles = item["smiles"]
 
-top_5_scores = [
-    x[0] for x in top_5
-]
+            # --------------------------------------------------------
+            # IMPORTANT:
+            # Don't compare molecule with itself
+            # --------------------------------------------------------
 
-max_similarity = similarities[0][0]
+            if training_smiles == query_smiles:
 
-mean_top5 = np.mean(top_5_scores)
+                continue
 
-most_similar_smiles = similarities[0][1]
+            similarity = TanimotoSimilarity(
+                query_fp,
+                item["fingerprint"]
+            )
 
-
-print("\n" + "=" * 60)
-print("APPLICABILITY DOMAIN")
-print("=" * 60)
-
-print("\nMaximum Tanimoto similarity:")
-print(f"{max_similarity:.4f}")
-
-print("\nMean top-5 similarity:")
-print(f"{mean_top5:.4f}")
-
-print("\nMost similar training molecule:")
-print(most_similar_smiles)
+            similarities.append(
+                (similarity, training_smiles)
+            )
 
 
-# ============================================================
-# 10. SHOW TOP 5 SIMILAR MOLECULES
-# ============================================================
+        # Sort from highest to lowest similarity
 
-print("\nTop 5 most similar training molecules:")
-
-for i, (score, smiles) in enumerate(top_5, start=1):
-
-    print(
-        f"{i}. Similarity = {score:.4f} | {smiles}"
-    )
+        similarities.sort(
+            key=lambda x: x[0],
+            reverse=True
+        )
 
 
-# ============================================================
-# 11. APPLICABILITY DOMAIN CLASSIFICATION
-# ============================================================
+        # ============================================================
+        # 9. SIMILARITY STATISTICS
+        # ============================================================
 
-print("\n" + "=" * 60)
-print("APPLICABILITY DOMAIN ASSESSMENT")
-print("=" * 60)
+        top_5 = similarities[:5]
 
-AD_THRESHOLD = 0.55
+        top_5_scores = [
+            x[0] for x in top_5
+        ]
 
-if max_similarity >= AD_THRESHOLD:
-    status = "HIGH CONFIDENCE / INSIDE DOMAIN"
-else:
-    status = "LOW CONFIDENCE / OUTSIDE DOMAIN"
-if max_similarity >= 0.80:
+        max_similarity = similarities[0][0]
 
-    status = "HIGH CONFIDENCE"
+        mean_top5 = np.mean(top_5_scores)
 
-elif max_similarity >= 0.60:
-
-    status = "MODERATE CONFIDENCE"
-
-else:
-
-    status = "LOW CONFIDENCE / OUTSIDE DOMAIN"
+        most_similar_smiles = similarities[0][1]
 
 
-print("\nPrediction status:")
-print(status)
+        print("\n" + "=" * 60)
+        print("APPLICABILITY DOMAIN")
+        print("=" * 60)
 
-print("\nInterpretation:")
+        print("\nMaximum Tanimoto similarity:")
+        print(f"{max_similarity:.4f}")
 
-if status == "HIGH CONFIDENCE":
+        print("\nMean top-5 similarity:")
+        print(f"{mean_top5:.4f}")
 
-    print(
-        "The molecule is structurally similar to compounds "
-        "in the training dataset."
-    )
+        print("\nMost similar training molecule:")
+        print(most_similar_smiles)
 
-elif status == "MODERATE CONFIDENCE":
 
-    print(
-        "The molecule has moderate structural similarity "
-        "to the training dataset. Prediction should be "
-        "interpreted with some caution."
-    )
+        # ============================================================
+        # 10. SHOW TOP 5 SIMILAR MOLECULES
+        # ============================================================
 
-else:
+        print("\nTop 5 most similar training molecules:")
 
-    print(
-        "The molecule is structurally dissimilar to the "
-        "training dataset. Prediction may be unreliable."
-    )
+        for i, (score, smiles) in enumerate(top_5, start=1):
 
-print("\n" + "=" * 60)
+            print(
+                f"{i}. Similarity = {score:.4f} | {smiles}"
+            )
+
+
+        # ============================================================
+        # 11. APPLICABILITY DOMAIN CLASSIFICATION
+        # ============================================================
+
+        AD_THRESHOLD = 0.55
+
+        if max_similarity >= 0.80:
+
+            status = "HIGH CONFIDENCE"
+
+        elif max_similarity >= AD_THRESHOLD:
+
+            status = "MODERATE CONFIDENCE / INSIDE DOMAIN"
+
+        else:
+
+            status = "LOW CONFIDENCE / OUTSIDE DOMAIN"
+
+
+        print("\n" + "=" * 60)
+        print("APPLICABILITY DOMAIN ASSESSMENT")
+        print("=" * 60)
+
+        print("\nPrediction status:")
+        print(status)
+
+        print("\nMaximum Tanimoto similarity:")
+        print(f"{max_similarity:.4f}")
+
+        print("\nMean top-5 similarity:")
+        print(f"{mean_top5:.4f}")
