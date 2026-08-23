@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,6 +11,15 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
 # ============================================================
+# PROJECT PATHS 
+# ============================================================
+BASE_DIR = Path(__file__).resolve().parent.parent
+RESULTS_DIR = BASE_DIR / "results"
+TABLES_DIR = RESULTS_DIR / "tables"
+FIGURES_DIR = RESULTS_DIR / "figures"
+MODEL_DIR = BASE_DIR / "models"
+DATA_DIR = BASE_DIR / "data"
+# ============================================================
 # 1. Load trained model
 # ============================================================
 
@@ -16,7 +27,9 @@ print("=" * 60)
 print("MODEL ERROR ANALYSIS")
 print("=" * 60)
 
-model = joblib.load("model.pkl")
+
+
+model = joblib.load(MODEL_DIR / "model.pkl")
 
 print("\nModel loaded successfully.")
 print("Model:", type(model).__name__)
@@ -26,7 +39,7 @@ print("Model:", type(model).__name__)
 # 2. Load dataset
 # ============================================================
 
-df = pd.read_excel("delaney.xlsx")
+df = pd.read_excel(DATA_DIR / "delaney.xlsx")
 
 df.columns = df.columns.str.strip()
 
@@ -215,7 +228,7 @@ print(
 # ============================================================
 
 results.to_csv(
-    "error_analysis_results.csv",
+    TABLES_DIR / "error_analysis_results.csv",
     index=False
 )
 
@@ -229,7 +242,7 @@ print(
 # ============================================================
 
 worst_predictions.head(20).to_csv(
-    "worst_predictions.csv",
+    TABLES_DIR / "worst_predictions.csv",
     index=False
 )
 
@@ -279,7 +292,7 @@ plt.grid(alpha=0.3)
 plt.tight_layout()
 
 plt.savefig(
-    "error_actual_vs_predicted.png",
+    FIGURES_DIR / "error_actual_vs_predicted.png",
     dpi=300,
     bbox_inches="tight"
 )
@@ -324,7 +337,7 @@ plt.grid(
 plt.tight_layout()
 
 plt.savefig(
-    "residual_distribution.png",
+    FIGURES_DIR / "residual_distribution.png",
     dpi=300,
     bbox_inches="tight"
 )
@@ -368,7 +381,7 @@ plt.grid(alpha=0.3)
 plt.tight_layout()
 
 plt.savefig(
-    "residuals_vs_predicted.png",
+    FIGURES_DIR / "residuals_vs_predicted.png",
     dpi=300,
     bbox_inches="tight"
 )

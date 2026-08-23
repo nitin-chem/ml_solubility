@@ -1,15 +1,25 @@
+from pathlib import Path
+
 import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
 from rdkit import Chem
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 from rdkit.DataStructs import BulkTanimotoSimilarity
-
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+
+BASE_DIR = Path(__file__).parent.parent
+DATA_DIR = BASE_DIR / "data"
+MODELS_DIR = BASE_DIR / "models"
+RESULTS_DIR = BASE_DIR / "results"
+FIGURES_DIR = RESULTS_DIR / "figures"
+TABLES_DIR = RESULTS_DIR / "tables"
 
 # ============================================================
 # APPLICABILITY DOMAIN vs MODEL ERROR ANALYSIS
@@ -24,7 +34,7 @@ print("=" * 60)
 # 1. LOAD MODEL
 # ============================================================
 
-model = joblib.load("model.pkl")
+model = joblib.load(MODELS_DIR / "model.pkl")
 
 print("\nModel loaded successfully.")
 print("Model:", type(model).__name__)
@@ -34,7 +44,7 @@ print("Model:", type(model).__name__)
 # 2. LOAD DATASET
 # ============================================================
 
-df = pd.read_excel("delaney.xlsx")
+df = pd.read_excel(DATA_DIR / "delaney.xlsx")
 
 df.columns = df.columns.str.strip()
 
@@ -298,7 +308,7 @@ results["AD_Class"] = [
 # ============================================================
 
 results.to_csv(
-    "ad_error_results.csv",
+    TABLES_DIR / "ad_error_results.csv",
     index=False
 )
 
@@ -336,7 +346,7 @@ print(summary)
 # ============================================================
 
 summary.to_csv(
-    "ad_error_summary.csv"
+    TABLES_DIR / "ad_error_summary.csv"
 )
 
 print("\nSaved:")
@@ -408,7 +418,7 @@ plt.grid(
 plt.tight_layout()
 
 plt.savefig(
-    "ad_vs_error.png",
+    FIGURES_DIR / "ad_vs_error.png",
     dpi=300
 )
 
@@ -446,7 +456,7 @@ plt.grid(
 plt.tight_layout()
 
 plt.savefig(
-    "top5_similarity_vs_error.png",
+    FIGURES_DIR / "top5_similarity_vs_error.png",
     dpi=300
 )
 
@@ -481,7 +491,7 @@ print(
 )
 
 worst.to_csv(
-    "ad_worst_predictions.csv",
+    TABLES_DIR / "ad_worst_predictions.csv",
     index=False
 )
 

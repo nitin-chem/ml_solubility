@@ -1,9 +1,24 @@
-import joblib
+import joblib  # noqa: I001
 import numpy as np
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 from rdkit.DataStructs import TanimotoSimilarity
+from pathlib import Path
+
+# ============================================================
+# 1. PROJECT PATHS
+# ============================================================
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+DATA_DIR = BASE_DIR / "data"
+MODELS_DIR = BASE_DIR / "models"
+RESULTS_DIR = BASE_DIR / "results"
+FIGURES_DIR = RESULTS_DIR / "figures"
+TABLES_DIR = RESULTS_DIR / "tables"
+
+FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+TABLES_DIR.mkdir(parents=True, exist_ok=True)
 
 # ============================================================
 # 1. LOAD MODEL
@@ -13,7 +28,7 @@ print("=" * 60)
 print("APPLICABILITY DOMAIN ANALYSIS")
 print("=" * 60)
 
-model = joblib.load("model.pkl")
+model = joblib.load(MODELS_DIR / "model.pkl")
 
 print("\nModel loaded successfully.")
 print("Model:", type(model).__name__)
@@ -23,7 +38,7 @@ print("Model:", type(model).__name__)
 # 2. LOAD DATASET
 # ============================================================
 
-df = pd.read_excel("delaney.xlsx")
+df = pd.read_excel(DATA_DIR / "delaney.xlsx")
 
 df.columns = df.columns.str.strip()
 

@@ -1,19 +1,29 @@
-import numpy as np
-import pandas as pd
+from pathlib import Path
+
 import joblib
 import matplotlib.pyplot as plt
-
+import numpy as np
+import pandas as pd
 from rdkit import Chem
-from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 from rdkit.Chem import Descriptors
-
+from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    mean_squared_error,
-    mean_absolute_error,
-    r2_score
-)
 
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+DATA_DIR = BASE_DIR / "data"
+MODELS_DIR = BASE_DIR / "models"
+RESULTS_DIR = BASE_DIR / "results"
+FIGURES_DIR = RESULTS_DIR / "figures"
+TABLES_DIR = RESULTS_DIR / "tables"
+
+FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+TABLES_DIR.mkdir(parents=True, exist_ok=True)
 
 # ============================================================
 # 1. LOAD DATASET
@@ -23,7 +33,7 @@ print("=" * 60)
 print("ESOL vs MACHINE LEARNING MODEL COMPARISON")
 print("=" * 60)
 
-df = pd.read_excel("delaney.xlsx")
+df = pd.read_excel(DATA_DIR / "delaney.xlsx")
 
 df.columns = df.columns.str.strip()
 
@@ -132,7 +142,7 @@ print("\nTest set size:", len(y_test))
 # 6. LOAD YOUR FINAL MODEL
 # ============================================================
 
-model = joblib.load("model.pkl")
+model = joblib.load(MODELS_DIR / "model.pkl")
 
 print("\nFinal model loaded.")
 print("Model:", type(model).__name__)
@@ -242,7 +252,7 @@ print(comparison.to_string(index=False))
 # ============================================================
 
 comparison.to_csv(
-    "esol_model_comparison.csv",
+    TABLES_DIR / "esol_model_comparison.csv",
     index=False
 )
 
@@ -324,7 +334,7 @@ plt.grid(alpha=0.3)
 plt.tight_layout()
 
 plt.savefig(
-    "esol_vs_gradient_boosting.png",
+    FIGURES_DIR / "esol_vs_gradient_boosting.png",
     dpi=300
 )
 
@@ -366,7 +376,7 @@ plt.grid(
 plt.tight_layout()
 
 plt.savefig(
-    "esol_vs_gradient_boosting_rmse.png",
+    FIGURES_DIR / "esol_vs_gradient_boosting_rmse.png",
     dpi=300
 )
 
@@ -391,7 +401,7 @@ prediction_comparison = pd.DataFrame({
 })
 
 prediction_comparison.to_csv(
-    "esol_vs_ml_predictions.csv",
+    TABLES_DIR / "esol_vs_ml_predictions.csv",
     index=False
 )
 

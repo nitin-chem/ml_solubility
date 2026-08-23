@@ -1,13 +1,26 @@
+from pathlib import Path
+
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 # ============================================================
+# PROJECT PATHS
+# ============================================================
+BASE_DIR = Path(__file__).parent.parent
+DATA_DIR = BASE_DIR / "data"    
+MODELS_DIR = BASE_DIR / "models"
+RESULTS_DIR = BASE_DIR / "results"
+FIGURES_DIR = RESULTS_DIR / "figures"
+TABLES_DIR = RESULTS_DIR / "tables"
+
+
+# ============================================================
 # 1. Load trained model
 # ============================================================
 
-model = joblib.load("model.pkl")
+model = joblib.load(MODELS_DIR / "model.pkl")
 
 print("Model loaded successfully.")
 
@@ -111,7 +124,7 @@ plt.title(
 plt.tight_layout()
 
 plt.savefig(
-    "feature_importance_descriptors.png",
+    FIGURES_DIR / "feature_importance_descriptors.png",
     dpi=300
 )
 
@@ -135,7 +148,7 @@ importance_df = importance_df.sort_values(
 )
 
 importance_df.to_csv(
-    "feature_importance.csv",
+    TABLES_DIR / "feature_importance.csv",
     index=False
 )
 

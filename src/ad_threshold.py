@@ -1,9 +1,25 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 from rdkit.DataStructs import BulkTanimotoSimilarity
+
+# ============================================================
+# 1. PROJECT PATHS  
+# ============================================================
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+DATA_DIR = BASE_DIR / "data"
+MODELS_DIR = BASE_DIR / "models"
+RESULTS_DIR = BASE_DIR / "results"
+FIGURES_DIR = RESULTS_DIR / "figures"
+TABLES_DIR = RESULTS_DIR / "tables"
+
+FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+TABLES_DIR.mkdir(parents=True, exist_ok=True)
 
 # ============================================================
 # APPLICABILITY DOMAIN THRESHOLD ANALYSIS
@@ -18,7 +34,7 @@ print("=" * 60)
 # 1. Load dataset
 # ------------------------------------------------------------
 
-df = pd.read_excel("delaney.xlsx")
+df = pd.read_excel(DATA_DIR / "delaney.xlsx")
 
 df.columns = df.columns.str.strip()
 
@@ -162,7 +178,7 @@ plt.grid(alpha=0.3)
 plt.tight_layout()
 
 plt.savefig(
-    "ad_similarity_distribution.png",
+    FIGURES_DIR / "ad_similarity_distribution.png",
     dpi=300
 )
 
@@ -183,7 +199,7 @@ ad_results = pd.DataFrame({
 })
 
 ad_results.to_csv(
-    "ad_similarity_distribution.csv",
+    TABLES_DIR / "ad_similarity_distribution.csv",
     index=False
 )
 

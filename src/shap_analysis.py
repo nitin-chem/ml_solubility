@@ -1,12 +1,27 @@
+from pathlib import Path
+
 import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import shap
-
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
+
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+DATA_DIR = BASE_DIR / "data"
+MODELS_DIR = BASE_DIR / "models"
+RESULTS_DIR = BASE_DIR / "results"
+FIGURES_DIR = RESULTS_DIR / "figures"
+TABLES_DIR = RESULTS_DIR / "tables"
+
+FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+TABLES_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ============================================================
@@ -17,7 +32,7 @@ print("=" * 60)
 print("SHAP MODEL INTERPRETABILITY")
 print("=" * 60)
 
-model = joblib.load("model.pkl")
+model = joblib.load(MODELS_DIR / "model.pkl")
 
 print("\nModel loaded successfully.")
 print("Model type:", type(model).__name__)
@@ -27,7 +42,7 @@ print("Model type:", type(model).__name__)
 # 2. Load dataset
 # ============================================================
 
-df = pd.read_excel("delaney.xlsx")
+df = pd.read_excel(DATA_DIR / "delaney.xlsx")
 
 df.columns = df.columns.str.strip()
 
@@ -182,7 +197,7 @@ print(
 # ============================================================
 
 shap_importance.to_csv(
-    "shap_feature_importance.csv",
+    TABLES_DIR / "shap_feature_importance.csv",
     index=False
 )
 
@@ -210,7 +225,7 @@ shap.summary_plot(
 plt.tight_layout()
 
 plt.savefig(
-    "shap_summary.png",
+    FIGURES_DIR / "shap_summary.png",
     dpi=300,
     bbox_inches="tight"
 )
@@ -240,7 +255,7 @@ shap.summary_plot(
 plt.tight_layout()
 
 plt.savefig(
-    "shap_bar.png",
+    FIGURES_DIR / "shap_bar.png",
     dpi=300,
     bbox_inches="tight"
 )
@@ -313,7 +328,7 @@ shap.plots.waterfall(
 plt.tight_layout()
 
 plt.savefig(
-    "shap_waterfall_molecule.png",
+    FIGURES_DIR / "shap_waterfall_molecule.png",
     dpi=300,
     bbox_inches="tight"
 )

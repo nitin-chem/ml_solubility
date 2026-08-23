@@ -1,12 +1,26 @@
-import pandas as pd
-import matplotlib.pyplot as plt
+from pathlib import Path
 
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+RESULTS_DIR = BASE_DIR / "results"
+TABLES_DIR = RESULTS_DIR / "tables"
+FIGURES_DIR = RESULTS_DIR / "figures"
+
+FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 # ============================================================
 # FINAL ACTUAL VS PREDICTED PLOT
 # ============================================================
-
-results = pd.read_csv("final_model_predictions.csv")
+results = pd.read_csv(
+    TABLES_DIR / "final_model_predictions.csv"
+)
 
 actual = results["Actual_logS"]
 predicted = results["Predicted_logS"]
@@ -52,11 +66,11 @@ plt.grid(alpha=0.25)
 plt.tight_layout()
 
 plt.savefig(
-    "actual_vs_predicted_final.png",
+    FIGURES_DIR / "actual_vs_predicted_final.png",
     dpi=300,
     bbox_inches="tight"
 )
 
 plt.show()
 
-print("Saved: actual_vs_predicted_final.png")
+print(f"Saved: {FIGURES_DIR / 'actual_vs_predicted_final.png'}")

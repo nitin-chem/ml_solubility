@@ -1,12 +1,27 @@
-import pandas as pd
-import matplotlib.pyplot as plt
+from pathlib import Path
 
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+RESULTS_DIR = BASE_DIR / "results"
+TABLES_DIR = RESULTS_DIR / "tables"
+FIGURES_DIR = RESULTS_DIR / "figures"
+
+FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 # ============================================================
 # FINAL MODEL PERFORMANCE FIGURE
 # ============================================================
 
-results = pd.read_csv("final_model_performance.csv")
+results = pd.read_csv(
+    TABLES_DIR / "final_model_performance.csv"
+)
 
 print("Final model performance:")
 print(results)
@@ -41,11 +56,11 @@ for i, value in enumerate(results["Value"]):
 plt.tight_layout()
 
 plt.savefig(
-    "final_model_performance.png",
+    FIGURES_DIR / "final_model_performance.png",
     dpi=300,
     bbox_inches="tight"
 )
 
 plt.show()
 
-print("\nSaved: final_model_performance.png")
+print(f"\nSaved: {FIGURES_DIR / 'final_model_performance.png'}")

@@ -1,6 +1,17 @@
-import pandas as pd
-import matplotlib.pyplot as plt
+from pathlib import Path
 
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+BASE_DIR = Path(__file__).parent.parent
+RESULTS_DIR = BASE_DIR / "results"  
+MODELS_DIR = BASE_DIR / "models"   
+RESULTS_DIR = BASE_DIR / "results"
+FIGURES_DIR = RESULTS_DIR / "figures"
+TABLES_DIR = RESULTS_DIR / "tables"
 
 # ============================================================
 # FINAL MODEL COMPARISON
@@ -47,7 +58,7 @@ print(df.to_string(index=False))
 # ============================================================
 
 df.to_csv(
-    "final_model_comparison.csv",
+    TABLES_DIR / "final_model_comparison.csv",
     index=False
 )
 
@@ -92,7 +103,7 @@ for bar, value in zip(bars, df["RMSE"]):
 plt.tight_layout()
 
 plt.savefig(
-    "final_model_rmse_comparison.png",
+    FIGURES_DIR / "final_model_rmse_comparison.png",
     dpi=300,
     bbox_inches="tight"
 )
@@ -142,7 +153,7 @@ for bar, value in zip(bars, df["R2"]):
 plt.tight_layout()
 
 plt.savefig(
-    "final_model_r2_comparison.png",
+    FIGURES_DIR / "final_model_r2_comparison.png",
     dpi=300,
     bbox_inches="tight"
 )

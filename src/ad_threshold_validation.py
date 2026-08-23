@@ -1,14 +1,28 @@
+from pathlib import Path
+
 import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
 from rdkit import Chem, DataStructs
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
-
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+DATA_DIR = BASE_DIR / "data"
+MODELS_DIR = BASE_DIR / "models"
+RESULTS_DIR = BASE_DIR / "results"
+FIGURES_DIR = RESULTS_DIR / "figures"
+TABLES_DIR = RESULTS_DIR / "tables"
+
+FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+TABLES_DIR.mkdir(parents=True, exist_ok=True)
 
 # ============================================================
 # 1. SETTINGS
@@ -31,7 +45,7 @@ print("=" * 60)
 print("APPLICABILITY DOMAIN THRESHOLD VALIDATION")
 print("=" * 60)
 
-model = joblib.load(MODEL_FILE)
+model = joblib.load(MODELS_DIR / MODEL_FILE)
 
 print("\nModel loaded successfully.")
 print("Model:", type(model).__name__)
@@ -41,7 +55,7 @@ print("Model:", type(model).__name__)
 # 3. LOAD DATASET
 # ============================================================
 
-df = pd.read_excel(DATA_FILE)
+df = pd.read_excel(DATA_DIR / DATA_FILE)
 
 df.columns = df.columns.str.strip()
 
@@ -304,7 +318,7 @@ for threshold in thresholds:
 results_df = pd.DataFrame(results)
 
 results_df.to_csv(
-    "ad_threshold_validation.csv",
+    TABLES_DIR / "ad_threshold_validation.csv",
     index=False
 )
 
@@ -388,7 +402,7 @@ plt.grid(alpha=0.3)
 plt.tight_layout()
 
 plt.savefig(
-    "ad_threshold_vs_rmse.png",
+    FIGURES_DIR / "ad_threshold_vs_rmse.png",
     dpi=300
 )
 
@@ -424,7 +438,7 @@ plt.grid(alpha=0.3)
 plt.tight_layout()
 
 plt.savefig(
-    "ad_threshold_vs_coverage.png",
+    FIGURES_DIR / "ad_threshold_vs_coverage.png",
     dpi=300
 )
 
