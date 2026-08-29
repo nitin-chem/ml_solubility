@@ -1,7 +1,8 @@
 import requests
 import streamlit as st
+from io import BytesIO
 from rdkit import Chem
-from rdkit.Chem import Draw
+from rdkit.Chem.Draw import rdMolDraw2D
 from src.applicability import check_applicability
 from src.predict import (
     molecular_properties,
@@ -34,6 +35,18 @@ def name_to_smiles(name):
     data = response.json()
 
     return data["PropertyTable"]["Properties"][0]["SMILES"]
+
+
+# ============================================================
+# Molecule rendering (headless Cairo backend for Streamlit Cloud)
+# ============================================================
+
+def render_molecule(mol, size=400):
+    """Render molecule to PNG bytes using Cairo (no X11 required)."""
+    drawer = rdMolDraw2D.MolDraw2DCairo(size, size)
+    drawer.DrawMolecule(mol)
+    return BytesIO(drawer.GetDrawingText())
+
 
 # ============================================================
 # Page configuration
@@ -412,10 +425,7 @@ if result is not None:
 
         st.subheader("Molecular Structure")
 
-        image = Draw.MolToImage(
-            mol,
-            size=(400, 400),
-        )
+        image = render_molecule(mol, size=400)
 
         st.image(image)
 
