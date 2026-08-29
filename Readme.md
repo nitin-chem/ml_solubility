@@ -1,263 +1,359 @@
 # Molecular Solubility Prediction using Machine Learning
 
-A machine learning project for predicting aqueous molecular solubility (`logS`) from molecular structure represented as SMILES.
+A machine learning project for predicting aqueous molecular solubility (logS) from molecular structure represented as SMILES.
 
-The project compares multiple regression models and uses RDKit molecular descriptors and Morgan fingerprints as molecular features. The best-performing model is further optimized using hyperparameter tuning and analyzed using cross-validation, SHAP interpretability, error analysis, and applicability-domain analysis.
+This repository trains and evaluates a regression model based on RDKit molecular descriptors and Morgan fingerprints, then exposes the trained model through a Streamlit application for interactive prediction.
 
 ---
 
-## 📌 Project Overview
+## 1. Project title and short description
+
+This project predicts the aqueous solubility of a molecule from its structure using a supervised machine-learning approach.
+
+The workflow is:
+
+- convert a molecule to SMILES
+- generate molecular descriptors and Morgan fingerprints
+- build a feature matrix
+- train a regression model
+- save the trained model
+- load the model in a Streamlit app for prediction
+- estimate applicability-domain confidence using Tanimoto similarity
+
+---
+
+## 2. Overview
 
 Aqueous solubility is an important molecular property in chemistry, pharmaceutical research, environmental chemistry, and drug discovery.
 
-In this project, molecular structures are converted from SMILES representations into numerical molecular features and used to train machine learning regression models for predicting:
+In this project, molecular structures are represented as SMILES and converted to numerical features for machine-learning prediction of:
 
-> **logS = logarithm of aqueous solubility in mol/L**
+> logS = logarithm of aqueous solubility in mol/L
 
-The complete workflow includes:
+The current implementation includes:
+
+- Delaney ESOL dataset processing
+- RDKit molecular descriptor generation
+- Morgan fingerprint generation
+- model training and evaluation
+- trained model serialization using joblib
+- Streamlit-based prediction interface
+- applicability-domain analysis based on molecular similarity
+
+---
+
+## 3. Key features
+
+- SMILES-based molecular feature generation
+- RDKit molecular descriptors
+- Morgan molecular fingerprints
+- Gradient Boosting Regressor model
+- 5-fold validation workflow in the model-development scripts
+- model comparison and performance analysis
+- application of applicability-domain logic
+- interactive prediction via Streamlit
+- molecule drawing, name lookup, and direct SMILES input
+- model artifact saved as `model.pkl`
+
+---
+
+## 4. Repository structure
 
 ```text
-SMILES
-   ↓
-RDKit Molecular Processing
-   ↓
-Molecular Descriptors + Morgan Fingerprints
-   ↓
-Feature Matrix
-   ↓
-Train / Test Split
-   ↓
-Machine Learning Models
-   ├── Linear Regression
-   ├── Random Forest
-   └── Gradient Boosting
-   ↓
-Cross-Validation
-   ↓
-Hyperparameter Optimization
-   ↓
-Best Model
-   ↓
-Prediction
-   ↓
-Interpretability + Error Analysis
-   ↓
-Applicability Domain
-✨ Features
+ml_solubility/
+├── app.py
+├── README.md
+├── requirements.txt
+├── LICENSE
+├── delaney.xlsx
+├── project_files.txt
+├── data/
+│   └── delaney.xlsx
+├── docs/
+│   └── figures/
+├── models/
+│   └── model.pkl
+├── results/
+│   ├── figures/
+│   └── tables/
+├── src/
+│   ├── actual_vs_predicted.py
+│   ├── ad_error_threshold.py
+│   ├── ad_threshold.py
+│   ├── ad_threshold_validation.py
+│   ├── applicability.py
+│   ├── error.py
+│   ├── esol_comparison.py
+│   ├── evaluate.py
+│   ├── feature_importance.py
+│   ├── final_results.py
+│   ├── model.py
+│   ├── model_comparison.py
+│   ├── predict.py
+│   ├── run_pipeline.py
+│   └── shap_analysis.py
+└── .venv/
+```
 
-This project currently includes:
+Key files:
 
-SMILES-based molecular feature generation
-RDKit molecular descriptors
-Morgan molecular fingerprints
-Linear Regression
-Random Forest Regression
-Gradient Boosting Regression
-5-fold cross-validation
-Randomized hyperparameter optimization
-Model comparison using RMSE and R²
-Prediction of solubility for new molecules
-Feature importance analysis
-SHAP-based model interpretability
-Individual molecule explanation using SHAP waterfall plots
-Prediction error analysis
-Residual analysis
-Applicability Domain analysis
-Tanimoto molecular similarity analysis
-Applicability-domain threshold validation
-Prediction confidence classification
-Actual vs predicted plots
-Model serialization using Joblib
-Prediction output saved as CSV
-Reproducible Python workflow
-📊 Dataset
+- `app.py`: Streamlit application for interactive prediction
+- `src/predict.py`: loads the trained model and generates features for prediction
+- `src/applicability.py`: computes Tanimoto similarity and applicability-domain confidence
+- `models/model.pkl`: trained GradientBoostingRegressor model artifact
+- `requirements.txt`: runtime dependencies for the current app
+- `results/`: plots and CSV results from model analysis
+
+---
+
+## 5. Dataset
 
 The project uses the Delaney ESOL solubility dataset.
 
-The dataset contains molecular structures represented by SMILES together with experimentally measured aqueous solubility values.
+The dataset contains experimentally measured aqueous solubility values and molecular structures represented as SMILES.
 
-Main columns
-Column	Description
-Compound ID	Compound identifier
-measured log(solubility:mol/L)	Experimental solubility
-ESOL predicted log(solubility:mol/L)	ESOL reference prediction
-SMILES	Molecular structure
+The dataset contains:
 
-After preprocessing, the dataset contains:
+- 1,144 molecules
+- target variable: measured aqueous solubility (logS)
+- SMILES strings for molecular structure representation
 
-Number of molecules: 1144
-🧬 Molecular Feature Generation
+The relevant dataset source is the Delaney ESOL workbook used by the project pipeline.
 
-Molecular structures are read from SMILES using RDKit.
+---
 
-Each molecule is represented using two types of features.
+## 6. Machine-learning model
 
-1. Molecular Descriptors
+The final model in the current repository is a `GradientBoostingRegressor` trained on molecular descriptors and Morgan fingerprints.
 
-The following descriptors are used:
+The trained model artifact is:
 
-Molecular Weight
-Molecular LogP
-Number of Hydrogen Bond Donors
-Number of Hydrogen Bond Acceptors
-Topological Polar Surface Area (TPSA)
-2. Morgan Fingerprints
+- `models/model.pkl`
 
-Morgan fingerprints are generated using:
+This model is loaded by the prediction and applicability-domain code.
 
+---
+
+## 7. Feature engineering
+
+Molecular structures are represented using two types of features:
+
+### 1. Molecular descriptors
+
+The current feature generation uses five molecular descriptors:
+
+- Molecular Weight
+- LogP
+- H-Bond Donors
+- H-Bond Acceptors
+- TPSA
+
+### 2. Morgan fingerprint
+
+Morgan fingerprints are generated with:
+
+```python
 GetMorganGenerator(
     radius=2,
     fpSize=512
 )
+```
 
-Therefore, each molecule contains:
+This yields:
 
-5 molecular descriptors
-+
-512 Morgan fingerprint features
-=
-517 total features
+- 5 molecular descriptor values
+- 512-bit Morgan fingerprint features
 
-Final feature matrix:
+Total feature vector length:
 
-(1144, 517)
-🤖 Machine Learning Models
+- 517 = 5 descriptors + 512 fingerprint bits
 
-Three regression algorithms were initially compared.
+This is the same feature set used in the runtime prediction logic in `src/predict.py`.
 
-Linear Regression
+---
 
-A simple baseline model used to establish the relationship between molecular features and solubility.
+## 8. Model performance
 
-Random Forest Regression
+The current project reports the following test performance for the final model:
 
-An ensemble tree-based model that combines predictions from multiple decision trees.
+- Test RMSE = 0.5964
+- Test MAE = 0.4553
 
-Gradient Boosting Regression
+The app sidebar also reports these values.
 
-An ensemble method that sequentially builds decision trees to minimize prediction error.
+The final model is trained and evaluated with a standard train/test split and is saved for later use in the Streamlit app.
 
-📈 Initial Model Performance
+---
 
-Using the same train/test split:
+## 9. Applicability domain
 
-Test size = 20%
-Random state = 42
-Model comparison
-Model	RMSE	R²
-Linear Regression	1.2918	0.6168
-Random Forest	0.6242	0.9105
-Gradient Boosting	0.6347	0.9075
+The application includes an applicability-domain check using Tanimoto similarity between the query molecule and molecules in the training set.
 
-The tree-based models significantly outperform the linear regression baseline.
+The implemented logic in `src/applicability.py` calculates:
 
-🔍 Cross-Validation
+- maximum Tanimoto similarity
+- mean top-5 similarity
+- top 5 most similar training molecules
+- an applicability-domain status
 
-To evaluate model stability, 5-fold cross-validation was performed.
+The validated threshold used by the app is:
 
-Random Forest
-Mean R²   = 0.8888
-Std R²    = 0.0102
+- AD threshold = 0.55
 
-Mean RMSE = 0.6966
-Std RMSE  = 0.0497
-Gradient Boosting
-Mean R²   = 0.8921
-Std R²    = 0.0098
+Validation coverage reported by the project is:
 
-Mean RMSE = 0.6867
-Std RMSE  = 0.0546
+- 58.08%
 
-The cross-validation results indicate that Gradient Boosting provides slightly better average performance than Random Forest.
+Inside-domain performance reported by the project is:
 
-⚙️ Hyperparameter Optimization
+- inside-domain RMSE = 0.4588
+- inside-domain MAE = 0.3596
 
-RandomizedSearchCV was used to optimize both tree-based models.
+The status is classified as:
 
-Random Forest
+- HIGH CONFIDENCE
+- MODERATE CONFIDENCE / INSIDE DOMAIN
+- LOW CONFIDENCE / OUTSIDE DOMAIN
 
-The optimized Random Forest produced:
+These labels are displayed in the Streamlit app after prediction.
 
-Best CV RMSE:
-0.68085
+---
 
-Best parameters:
+## 10. Input methods
 
-n_estimators      = 200
-max_depth         = 25
-min_samples_split = 2
-min_samples_leaf  = 2
-max_features      = 0.5
+The current Streamlit application supports three ways to provide a molecule:
 
-Test performance:
+### 1. Draw Molecule
 
-RMSE = 0.6174
-R²   = 0.9125
-🚀 Optimized Gradient Boosting Model
+The user draws a molecule in the chemical editor. The generated SMILES is used as the prediction input.
 
-The Gradient Boosting model was optimized using RandomizedSearchCV.
+### 2. Molecule Name
 
-Best parameters:
+The user enters a molecule name. The application uses the PubChem REST API to look up the compound and retrieve its SMILES.
 
-n_estimators      = 500
-learning_rate     = 0.08
-max_depth         = 4
-min_samples_split = 5
-min_samples_leaf  = 6
-subsample         = 0.9
-Best Cross-Validation Performance
-CV RMSE = 0.6686
-Final Test Performance
-RMSE = 0.5964
-R²   = 0.9183
+This workflow requires network access to PubChem.
 
-The optimized Gradient Boosting model is therefore selected as the final model.
+### 3. Enter SMILES
 
-🏆 Final Model
+The user enters a SMILES string directly in the app.
 
-The final model is:
+The app then validates the SMILES, runs prediction, and computes applicability-domain metrics.
 
-GradientBoostingRegressor
+---
 
-Performance:
+## 11. Installation
 
-Metric	Value
-RMSE	0.5964
-R²	0.9183
-MAE	0.4553
+The project runtime dependencies are listed in `requirements.txt`.
 
-The trained model is saved as:
+Quick start for Windows PowerShell:
 
-model.pkl
-🔮 Making Predictions
+```powershell
+cd C:\Users\pc\Desktop\ml_solubility
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
 
-A separate prediction script is provided:
+The current runtime dependency list includes:
 
-predict.py
+- streamlit
+- streamlit-ketcher
+- requests
+- joblib
+- numpy
+- pandas
+- rdkit
+- scikit-learn
 
-Run:
+---
 
-python predict.py
+## 12. Running the Streamlit application
 
-The program asks for a SMILES string:
+To launch the application from the project root:
 
-Enter SMILES: CCO
+```powershell
+cd C:\Users\pc\Desktop\ml_solubility
+.\.venv\Scripts\Activate.ps1
+streamlit run app.py
+```
 
-Example output:
+The application entry point is:
 
-Features generated: (1, 517)
+```bash
+streamlit run app.py
+```
 
-PREDICTION
+---
 
-SMILES: CCO
-Predicted logS: 1.1421
+## 13. Prediction workflow
 
-The script automatically:
+The current prediction workflow is:
 
-Reads the SMILES
-Converts it into an RDKit molecule
-Generates molecular descriptors
-Generates Morgan fingerprints
+1. User provides a molecule through one of the three input methods.
+2. The app resolves that input to a canonical SMILES string.
+3. The SMILES is validated with RDKit.
+4. The app calls the prediction function in `src/predict.py`.
+5. The model predicts solubility using the 517-feature representation.
+6. Applicability-domain analysis is computed using molecular similarity.
+7. The app displays:
+   - predicted logS
+   - molecular properties
+   - applicability-domain statistics
+   - confidence state
+   - top 5 most similar molecules from the training set
+
+The prediction functions used by the app are:
+
+- `predict_solubility(current_smiles)`
+- `check_applicability(current_smiles)`
+- `molecular_properties(current_smiles)`
+
+---
+
+## 14. Limitations
+
+This project is a focused machine-learning workflow for the Delaney ESOL dataset and is not a universal solubility model for all possible chemical compounds.
+
+Important limitations include:
+
+- the model is trained on a specific chemical domain
+- predictions outside the validated applicability domain may be unreliable
+- the applicability-domain analysis is a similarity-based estimate, not a guarantee of correctness
+- the Molecule Name workflow depends on network access to the PubChem API
+- the model should be interpreted with caution for compounds that are chemically far from the training set
+
+Users should treat predictions outside the validated domain with caution.
+
+---
+
+## 15. References / notes
+
+This project is based on:
+
+- Delaney ESOL aqueous solubility dataset
+- RDKit molecular descriptor generation
+- Morgan fingerprint generation
+- Gradient Boosting regression
+- applicability-domain analysis using Tanimoto similarity
+
+The trained model artifact and output results in the repository reflect the current implementation and should be used as the source of truth for the project state.
+
+---
+
+## Quick Start
+
+```powershell
+cd C:\Users\pc\Desktop\ml_solubility
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+streamlit run app.py
+```
+
+This project is designed for local use in a Python environment with the installed runtime dependencies.
+
 Combines the features
 Loads model.pkl
 Predicts logS
@@ -317,15 +413,15 @@ Model errors were analyzed on the test set.
 Final model:
 
 RMSE = 0.5964
-MAE  = 0.4553
-R²   = 0.9183
+MAE = 0.4553
+R² = 0.9183
 
 Additional statistics:
 
-Mean residual              = 0.0229
-Median absolute error      = 0.3680
-Maximum absolute error     = 2.3088
-Minimum absolute error     = 0.0022
+Mean residual = 0.0229
+Median absolute error = 0.3680
+Maximum absolute error = 2.3088
+Minimum absolute error = 0.0022
 
 The largest prediction errors were observed for several chemically challenging molecules, including highly aromatic and polycyclic compounds.
 
@@ -366,10 +462,10 @@ The model uses similarity to determine prediction confidence.
 
 The analysis identified three practical categories:
 
-Class	Interpretation
-HIGH	High structural similarity to training data
-MODERATE	Moderate similarity
-LOW	Low similarity; prediction should be treated cautiously
+Class Interpretation
+HIGH High structural similarity to training data
+MODERATE Moderate similarity
+LOW Low similarity; prediction should be treated cautiously
 
 For example:
 
@@ -393,16 +489,16 @@ Different similarity thresholds were evaluated against prediction error.
 
 Example results:
 
-Threshold	Coverage	RMSE
-0.20	99.1%	0.5974
-0.30	93.4%	0.5773
-0.40	83.8%	0.5353
-0.50	72.1%	0.5121
-0.55	58.1%	0.4588
-0.60	46.7%	0.4385
-0.65	33.6%	0.4152
-0.70	24.5%	0.4360
-0.80	15.7%	0.3785
+Threshold Coverage RMSE
+0.20 99.1% 0.5974
+0.30 93.4% 0.5773
+0.40 83.8% 0.5353
+0.50 72.1% 0.5121
+0.55 58.1% 0.4588
+0.60 46.7% 0.4385
+0.65 33.6% 0.4152
+0.70 24.5% 0.4360
+0.80 15.7% 0.3785
 
 A threshold of approximately:
 
@@ -413,13 +509,13 @@ was selected as a practical operating point.
 At this threshold:
 
 Coverage = 58.08%
-RMSE     = 0.4588
-MAE      = 0.3596
+RMSE = 0.4588
+MAE = 0.3596
 
 This illustrates the trade-off between:
 
 Prediction Coverage
-        vs.
+vs.
 Prediction Reliability
 
 Increasing the similarity threshold generally improves accuracy for predictions retained inside the domain, but reduces the fraction of molecules that qualify.
@@ -431,48 +527,48 @@ The repository is organized as follows:
 ml_solubility/
 │
 ├── data/
-│   └── delaney.xlsx
+│ └── delaney.xlsx
 │
 ├── src/
-│   ├── model.py
-│   ├── predict.py
-│   ├── feature_importance.py
-│   ├── shap_analysis.py
-│   ├── error.py
-│   ├── applicability.py
-│   ├── ad_threshold.py
-│   ├── ad_error_threshold.py
-│   └── ad_threshold_validation.py
+│ ├── model.py
+│ ├── predict.py
+│ ├── feature_importance.py
+│ ├── shap_analysis.py
+│ ├── error.py
+│ ├── applicability.py
+│ ├── ad_threshold.py
+│ ├── ad_error_threshold.py
+│ └── ad_threshold_validation.py
 │
 ├── models/
-│   └── model.pkl
+│ └── model.pkl
 │
 ├── results/
-│   ├── predictions.csv
-│   ├── feature_importance.csv
-│   ├── shap_feature_importance.csv
-│   ├── error_analysis_results.csv
-│   ├── worst_predictions.csv
-│   ├── ad_similarity_distribution.csv
-│   ├── ad_error_results.csv
-│   ├── ad_error_summary.csv
-│   ├── ad_worst_predictions.csv
-│   └── ad_threshold_validation.csv
+│ ├── predictions.csv
+│ ├── feature_importance.csv
+│ ├── shap_feature_importance.csv
+│ ├── error_analysis_results.csv
+│ ├── worst_predictions.csv
+│ ├── ad_similarity_distribution.csv
+│ ├── ad_error_results.csv
+│ ├── ad_error_summary.csv
+│ ├── ad_worst_predictions.csv
+│ └── ad_threshold_validation.csv
 │
 ├── plots/
-│   ├── actual_vs_predicted.png
-│   ├── feature_importance_descriptors.png
-│   ├── shap_summary.png
-│   ├── shap_bar.png
-│   ├── shap_waterfall_molecule.png
-│   ├── error_actual_vs_predicted.png
-│   ├── residual_distribution.png
-│   ├── residuals_vs_predicted.png
-│   ├── ad_similarity_distribution.png
-│   ├── ad_vs_error.png
-│   ├── top5_similarity_vs_error.png
-│   ├── ad_threshold_vs_rmse.png
-│   └── ad_threshold_vs_coverage.png
+│ ├── actual_vs_predicted.png
+│ ├── feature_importance_descriptors.png
+│ ├── shap_summary.png
+│ ├── shap_bar.png
+│ ├── shap_waterfall_molecule.png
+│ ├── error_actual_vs_predicted.png
+│ ├── residual_distribution.png
+│ ├── residuals_vs_predicted.png
+│ ├── ad_similarity_distribution.png
+│ ├── ad_vs_error.png
+│ ├── top5_similarity_vs_error.png
+│ ├── ad_threshold_vs_rmse.png
+│ └── ad_threshold_vs_coverage.png
 │
 ├── requirements.txt
 ├── README.md
@@ -481,13 +577,13 @@ ml_solubility/
 If your actual folder names differ, update this section to match the final repository structure.
 
 💻 Installation
+
 1. Clone the repository
-git clone https://github.com/nitin-chem/ml_solubility.git
+   git clone https://github.com/nitin-chem/ml_solubility.git
 
 Move into the project directory:
 
-cd ml_solubility
-2. Create a virtual environment
+cd ml_solubility 2. Create a virtual environment
 
 Windows:
 
@@ -503,8 +599,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 Then activate again:
 
-.venv\Scripts\Activate.ps1
-3. Install dependencies
+.venv\Scripts\Activate.ps1 3. Install dependencies
 
 Install the required packages:
 
@@ -755,62 +850,62 @@ Web-based prediction interface
 Streamlit application
 REST API for model prediction
 🧰 Technologies Used
-Technology	Purpose
-Python	Programming language
-RDKit	Molecular processing and fingerprints
-NumPy	Numerical computation
-Pandas	Data processing
-Scikit-learn	Machine learning
-Matplotlib	Visualization
-Seaborn	Statistical visualization
-SHAP	Model interpretability
-Joblib	Model serialization
-Git/GitHub	Version control
+Technology Purpose
+Python Programming language
+RDKit Molecular processing and fingerprints
+NumPy Numerical computation
+Pandas Data processing
+Scikit-learn Machine learning
+Matplotlib Visualization
+Seaborn Statistical visualization
+SHAP Model interpretability
+Joblib Model serialization
+Git/GitHub Version control
 📚 Scientific Workflow
 
 The project follows the following computational workflow:
 
 Experimental Solubility Dataset
-            ↓
-       SMILES Input
-            ↓
-       RDKit Parsing
-            ↓
- ┌─────────────────────────┐
- │ Molecular Descriptors   │
- │ +                       │
- │ Morgan Fingerprints     │
- └─────────────────────────┘
-            ↓
-       Feature Matrix
-            ↓
-       Train/Test Split
-            ↓
- ┌─────────────────────────┐
- │ Linear Regression       │
- │ Random Forest           │
- │ Gradient Boosting       │
- └─────────────────────────┘
-            ↓
-    Cross-Validation
-            ↓
- Hyperparameter Optimization
-            ↓
-   Optimized Gradient Boosting
-            ↓
- ┌─────────────────────────┐
- │ Prediction              │
- │ Feature Importance      │
- │ SHAP                    │
- │ Error Analysis          │
- │ Applicability Domain    │
- └─────────────────────────┘
+↓
+SMILES Input
+↓
+RDKit Parsing
+↓
+┌─────────────────────────┐
+│ Molecular Descriptors │
+│ + │
+│ Morgan Fingerprints │
+└─────────────────────────┘
+↓
+Feature Matrix
+↓
+Train/Test Split
+↓
+┌─────────────────────────┐
+│ Linear Regression │
+│ Random Forest │
+│ Gradient Boosting │
+└─────────────────────────┘
+↓
+Cross-Validation
+↓
+Hyperparameter Optimization
+↓
+Optimized Gradient Boosting
+↓
+┌─────────────────────────┐
+│ Prediction │
+│ Feature Importance │
+│ SHAP │
+│ Error Analysis │
+│ Applicability Domain │
+└─────────────────────────┘
 📌 Key Result
 
 The optimized Gradient Boosting model achieved:
 
 Test RMSE = 0.5964
-Test R²   = 0.9183
+Test R² = 0.9183
 
 This demonstrates that molecular descriptors combined with Morgan fingerprints can provide strong predictive performance for the Delaney aqueous solubility dataset.
 
@@ -835,4 +930,7 @@ Scikit-learn for machine learning algorithms
 SHAP for model interpretability
 The authors of the Delaney ESOL dataset
 Open-source Python scientific computing community
+
+```
+
 ```

@@ -1,3 +1,4 @@
+import requests
 import streamlit as st
 from rdkit import Chem
 from rdkit.Chem import Draw
@@ -7,6 +8,32 @@ from src.predict import (
     predict_solubility,
 )
 from streamlit_ketcher import st_ketcher
+
+# ============================================================
+# Convert molecule name to SMILES using PubChem
+# ============================================================
+
+def name_to_smiles(name):
+
+    url = (
+        "https://pubchem.ncbi.nlm.nih.gov/rest/pug/"
+        f"compound/name/{requests.utils.quote(name)}"
+        "/property/SMILES/JSON"
+    )
+
+    response = requests.get(
+        url,
+        timeout=10,
+    )
+
+    if response.status_code == 404:
+        return None
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    return data["PropertyTable"]["Properties"][0]["SMILES"]
 
 # ============================================================
 # Page configuration
@@ -29,6 +56,11 @@ if "prediction_result" not in st.session_state:
 if "predicted_smiles" not in st.session_state:
     st.session_state.predicted_smiles = ""
 
+if "name_smiles" not in st.session_state:
+    st.session_state.name_smiles = ""
+
+if "name_smiles_source" not in st.session_state:
+    st.session_state.name_smiles_source = ""
 
 # ============================================================
 # Sidebar - Model Information
@@ -145,7 +177,6 @@ if input_method == "✏️ Draw Molecule":
 # ============================================================
 # Molecule Name
 # ============================================================
-
 elif input_method == "🔤 Molecule Name":
 
     molecule_name = st.text_input(
@@ -154,10 +185,61 @@ elif input_method == "🔤 Molecule Name":
         key="molecule_name",
     )
 
-    st.info(
-        "Name-to-SMILES conversion will be added next."
-    )
+    if molecule_name.strip():
 
+        if molecule_name.strip() != st.session_state.name_smiles_source:
+            st.session_state.name_smiles = ""
+            st.session_state.name_smiles_source = ""
+
+        if st.button("Convert to SMILES"):
+
+            try:
+
+                converted_smiles = name_to_smiles(
+                    molecule_name.strip()
+                )
+
+                if converted_smiles:
+
+                    st.session_state.name_smiles = converted_smiles
+                    st.session_state.name_smiles_source = molecule_name.strip()
+
+                else:
+
+                    st.error(
+                        "Molecule not found in PubChem."
+                    )
+
+            except requests.RequestException:
+
+                st.error(
+                    "Could not connect to PubChem. "
+                    "Please try again."
+                )
+
+            except (KeyError, IndexError):
+
+                st.error(
+                    "PubChem returned an unexpected response."
+                )
+
+
+    # --------------------------------------------------------
+    # Display converted SMILES
+    # --------------------------------------------------------
+
+    if st.session_state.name_smiles:
+
+        st.subheader("Generated SMILES")
+
+        st.code(
+            st.session_state.name_smiles,
+            language="text",
+        )
+
+        st.caption(
+            "SMILES retrieved from PubChem."
+        )
 
 # ============================================================
 # Direct SMILES
@@ -178,14 +260,18 @@ elif input_method == "</> Enter SMILES":
 current_smiles = ""
 
 if input_method == "✏️ Draw Molecule":
+    current_smiles = drawn_smiles.strip()
 
-    if drawn_smiles:
-        current_smiles = drawn_smiles.strip()
+elif input_method == "🔤 Molecule Name":
+    if (
+        st.session_state.name_smiles
+        and molecule_name.strip()
+        and molecule_name.strip() == st.session_state.name_smiles_source
+    ):
+        current_smiles = st.session_state.name_smiles.strip()
 
-
-elif input_method == "</> Enter SMILES" and direct_smiles.strip():
+elif input_method == "</> Enter SMILES":
     current_smiles = direct_smiles.strip()
-
 
 # ============================================================
 # Show generated SMILES
@@ -204,31 +290,14 @@ if input_method == "✏️ Draw Molecule" and drawn_smiles:
         "This SMILES was generated from the molecular "
         "structure you drew above."
     )
-# ============================================================
-# Determine current SMILES
-# ============================================================
-
-current_smiles = ""
-
-if drawn_smiles:
-
-    current_smiles = drawn_smiles.strip()
-
-elif direct_smiles.strip():
-
-    current_smiles = direct_smiles.strip()
-
-
-
 
 # ============================================================
 # Clear result when user changes molecule
 # ============================================================
 
-if (
-    st.session_state.predicted_smiles
-    and current_smiles
-    and current_smiles != st.session_state.predicted_smiles
+if st.session_state.predicted_smiles and (
+    not current_smiles
+    or current_smiles != st.session_state.predicted_smiles
 ):
 
     st.session_state.prediction_result = None
@@ -325,16 +394,12 @@ result = st.session_state.prediction_result
 
 if result is not None:
 
-    mol = Chem.MolFromSmiles(current_smiles)
+    smiles = result["smiles"]
+    prediction = result["prediction"]
+    ad_result = result["ad_result"]
+    properties = result["properties"]
 
-    prediction = predict_solubility(current_smiles)
-
-    ad_result = check_applicability(current_smiles)
-
-    properties = molecular_properties(current_smiles)
-
-    st.success("Prediction completed!")
-
+    mol = Chem.MolFromSmiles(smiles)
 
     # ========================================================
     # Molecular Structure + Prediction
