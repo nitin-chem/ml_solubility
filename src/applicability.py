@@ -129,10 +129,10 @@ def check_applicability(smiles):
             (similarity, training_smiles)
         )
 
-        similarities.sort(
-            key=lambda x: x[0],
-            reverse=True
-        )
+    similarities.sort(
+        key=lambda x: x[0],
+        reverse=True
+    )
 
     top_5 = similarities[:5]
 

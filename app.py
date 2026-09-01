@@ -336,8 +336,8 @@ if st.button(
         if molecule_name.strip():
 
             st.warning(
-                "Name-to-SMILES conversion is not available yet. "
-                "Please use the Draw Molecule or SMILES tab."
+                "This name hasn't been converted to a SMILES string yet. "
+                "Click 'Convert to SMILES' above before predicting."
             )
 
         else:
