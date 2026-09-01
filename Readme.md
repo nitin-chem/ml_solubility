@@ -327,7 +327,11 @@ Users should treat predictions outside the validated domain with caution.
 
 ---
 
-## 15. References / notes
+## 15.🚀 Live Demo
+
+[Try the ML Solubility Predictor](https://molsol.streamlit.app/)
+
+## 16. References / notes
 
 This project is based on:
 
