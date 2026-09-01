@@ -140,6 +140,15 @@ def check_applicability(smiles):
         score for score, _ in top_5
     ]
 
+    if not similarities:
+        return {
+            "max_similarity": 0.0,
+            "mean_top5": 0.0,
+            "status": "LOW CONFIDENCE / OUTSIDE DOMAIN",
+            "most_similar_smiles": "",
+            "top_5": [],
+        }
+
     max_similarity = similarities[0][0]
 
     mean_top5 = np.mean(top_5_scores)

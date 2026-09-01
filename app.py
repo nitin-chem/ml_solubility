@@ -84,8 +84,8 @@ with st.sidebar:
     st.title("🧪 Model Information")
 
     st.write(
-        "Information about the machine-learning model "
-        "used for solubility prediction."
+        "Overview of the machine-learning model used "
+        "for aqueous solubility prediction."
     )
 
     st.divider()
@@ -132,8 +132,8 @@ with st.sidebar:
 st.title("🧪 Molecular Solubility Predictor")
 
 st.write(
-    "Predict the aqueous solubility (LogS) of a molecule "
-    "using a machine-learning model."
+    "Estimate the aqueous solubility (LogS) of a molecule "
+    "from its structure and molecular descriptors."
 )
 
 
@@ -141,7 +141,8 @@ st.write(
 # Molecule Input Method
 # ============================================================
 
-st.subheader("Choose how to provide your molecule")
+st.subheader("Choose an input method")
+st.caption("Select the workflow you want to use for your molecule.")
 
 input_method = st.radio(
     "Input method",
@@ -182,7 +183,7 @@ molecule_name = ""
 
 if input_method == "✏️ Draw Molecule":
 
-    st.write("Draw your molecule below.")
+    st.caption("Draw a molecule to generate the SMILES used for prediction.")
 
     drawn_smiles = st_ketcher("")
 
@@ -197,6 +198,7 @@ elif input_method == "🔤 Molecule Name":
         placeholder="Example: ethanol",
         key="molecule_name",
     )
+    st.caption("Type a name and click Convert to SMILES.")
 
     if molecule_name.strip():
 
@@ -204,7 +206,7 @@ elif input_method == "🔤 Molecule Name":
             st.session_state.name_smiles = ""
             st.session_state.name_smiles_source = ""
 
-        if st.button("Convert to SMILES"):
+        if st.button("Convert to SMILES", type="secondary"):
 
             try:
 
@@ -238,20 +240,19 @@ elif input_method == "🔤 Molecule Name":
 
 
     # --------------------------------------------------------
-    # Display converted SMILES
+    # Display current SMILES for prediction
     # --------------------------------------------------------
 
-    if st.session_state.name_smiles:
+    if st.session_state.name_smiles and (
+        molecule_name.strip()
+        and molecule_name.strip() == st.session_state.name_smiles_source
+    ):
 
-        st.subheader("Generated SMILES")
+        st.caption("Current SMILES for prediction")
 
         st.code(
             st.session_state.name_smiles,
             language="text",
-        )
-
-        st.caption(
-            "SMILES retrieved from PubChem."
         )
 
 # ============================================================
@@ -261,10 +262,19 @@ elif input_method == "🔤 Molecule Name":
 elif input_method == "</> Enter SMILES":
 
     direct_smiles = st.text_input(
-        "Enter SMILES",
+        "SMILES",
         placeholder="Example: CCO",
         key="direct_smiles",
     )
+
+    if direct_smiles.strip():
+
+        st.caption("Molecule used for prediction")
+
+        st.code(
+            direct_smiles.strip(),
+            language="text",
+        )
     
 # ============================================================
 # Determine current SMILES
@@ -292,16 +302,11 @@ elif input_method == "</> Enter SMILES":
 
 if input_method == "✏️ Draw Molecule" and drawn_smiles:
 
-    st.subheader("Generated SMILES")
+    st.caption("Generated SMILES for prediction")
 
     st.code(
         drawn_smiles,
         language="text",
-    )
-
-    st.caption(
-        "This SMILES was generated from the molecular "
-        "structure you drew above."
     )
 
 # ============================================================
@@ -434,10 +439,14 @@ if result is not None:
 
         st.subheader("Prediction")
 
-        st.metric(
-            "Predicted LogS",
-            f"{prediction:.4f}",
-        )
+        with st.container(border=True):
+            st.metric(
+                "Predicted LogS",
+                f"{prediction:.4f}",
+            )
+            st.caption(
+                "Aqueous solubility at 25°C (mol/L, log scale)"
+            )
 
 
     # ========================================================
@@ -446,47 +455,44 @@ if result is not None:
 
     st.subheader("Molecular Properties")
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    with st.container(border=True):
 
+        col1, col2, col3, col4, col5 = st.columns(5)
 
-    with col1:
+        with col1:
+            st.metric(
+                "Molecular Weight",
+                f"{properties['Molecular Weight']:.2f}",
+            )
+            st.caption("molecular mass in g/mol.")
 
-        st.metric(
-            "MW",
-            f"{properties['Molecular Weight']:.2f}",
-        )
+        with col2:
+            st.metric(
+                "LogP",
+                f"{properties['LogP']:.2f}",
+            )
+            st.caption("a measure of molecular lipophilicity.")
 
+        with col3:
+            st.metric(
+                "H-Bond Donors (HBD)",
+                int(properties["H-Bond Donors"]),
+            )
+            st.caption("number of hydrogen-bond donor sites.")
 
-    with col2:
+        with col4:
+            st.metric(
+                "H-Bond Acceptors (HBA)",
+                int(properties["H-Bond Acceptors"]),
+            )
+            st.caption("number of hydrogen-bond acceptor sites.")
 
-        st.metric(
-            "LogP",
-            f"{properties['LogP']:.2f}",
-        )
-
-
-    with col3:
-
-        st.metric(
-            "HBD",
-            int(properties["H-Bond Donors"]),
-        )
-
-
-    with col4:
-
-        st.metric(
-            "HBA",
-            int(properties["H-Bond Acceptors"]),
-        )
-
-
-    with col5:
-
-        st.metric(
-            "TPSA",
-            f"{properties['TPSA']:.2f}",
-        )
+        with col5:
+            st.metric(
+                "TPSA",
+                f"{properties['TPSA']:.2f}",
+            )
+            st.caption("topological polar surface area in Å².")
 
 
     # ========================================================
@@ -495,73 +501,71 @@ if result is not None:
 
     st.subheader("Applicability Domain")
 
-    col1, col2 = st.columns(2)
+    with st.container(border=True):
 
+        # Similarity metrics
+        col1, col2, col3 = st.columns(3)
 
-    with col1:
+        with col1:
+            st.metric(
+                "Max Similarity",
+                f"{ad_result['max_similarity']:.4f}",
+                delta=None,
+            )
 
-        st.metric(
-            "Maximum Tanimoto Similarity",
-            f"{ad_result['max_similarity']:.4f}",
-        )
+        with col2:
+            st.metric(
+                "Mean Top-5",
+                f"{ad_result['mean_top5']:.4f}",
+                delta=None,
+            )
 
+        with col3:
+            st.metric(
+                "Threshold",
+                "0.55",
+                delta=None,
+            )
 
-    with col2:
-
-        st.metric(
-            "Mean Top-5 Similarity",
-            f"{ad_result['mean_top5']:.4f}",
-        )
-
-
-    # ========================================================
     # AD Status
-    # ========================================================
-
     status = ad_result["status"]
-
+    max_sim = ad_result['max_similarity']
 
     if status == "HIGH CONFIDENCE":
 
         st.success(
-            "🟢 HIGH CONFIDENCE\n\n"
-            "The molecule is highly similar to compounds "
-            "in the model's training chemical space."
+            f"🟢 **HIGH CONFIDENCE**\n\n"
+            f"Maximum similarity: **{max_sim:.4f}**\n\n"
+            f"The molecule shows strong similarity to compounds "
+            f"in the training set. The prediction is highly reliable."
         )
-
 
     elif status == "MODERATE CONFIDENCE / INSIDE DOMAIN":
 
         st.warning(
-            "🟡 MODERATE CONFIDENCE / INSIDE DOMAIN\n\n"
-            "The molecule is within the validated "
-            "applicability domain, but the prediction "
-            "should be interpreted with some caution."
+            f"🟡 **MODERATE CONFIDENCE**\n\n"
+            f"Maximum similarity: **{max_sim:.4f}**\n\n"
+            f"The molecule is within the validated applicability domain "
+            f"(similarity ≥ 0.55), but the prediction should be "
+            f"interpreted with appropriate caution."
         )
-
 
     else:
 
         st.error(
-            "🔴 LOW CONFIDENCE / OUTSIDE DOMAIN\n\n"
-            "The molecule is outside the validated "
-            "applicability domain. The prediction "
-            "may be unreliable."
+            f"🔴 **LOW CONFIDENCE / OUTSIDE DOMAIN**\n\n"
+            f"Maximum similarity: **{max_sim:.4f}**\n\n"
+            f"The molecule is outside the validated applicability domain "
+            f"(similarity < 0.55) and the prediction may be unreliable."
         )
-
 
     # ========================================================
     # Most Similar Training Molecules
     # ========================================================
 
-    st.subheader(
-        "Most Similar Training Molecules"
-    )
+    st.subheader("Most Similar Training Molecules")
 
-
-    with st.expander(
-        "Show Top 5 Similar Molecules"
-    ):
+    with st.expander("Show Top 5 Similar Molecules"):
 
         for i, (
             similarity,
@@ -571,8 +575,13 @@ if result is not None:
             start=1,
         ):
 
-            st.write(
-                f"**{i}.** `{similar_smiles}` "
-                f"— Tanimoto similarity: "
-                f"**{similarity:.4f}**"
-            )
+            col_rank, col_sim, col_smiles = st.columns([1, 2, 7])
+
+            with col_rank:
+                st.write(f"**#{i}**")
+
+            with col_sim:
+                st.write(f"**{similarity:.4f}**")
+
+            with col_smiles:
+                st.code(similar_smiles, language="text")
